@@ -408,6 +408,13 @@ public class PDFView extends RelativeLayout {
         }
     }
 
+    public void closeDocument() {
+        if (pdfFile != null) {
+            pdfFile.dispose();
+            pdfFile = null;
+        }
+    }
+
     public void recycle() {
         waitingDocumentConfigurator = null;
 
