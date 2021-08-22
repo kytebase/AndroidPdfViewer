@@ -29,7 +29,9 @@ import com.shockwave.pdfium.util.Size;
 import com.shockwave.pdfium.util.SizeF;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 class PdfFile {
 
@@ -75,6 +77,10 @@ class PdfFile {
      */
     private int[] originalUserPages;
 
+    private final int MAX_PAGES = 2;
+
+    private final Queue<Integer> openPageQueue ;
+
     PdfFile(PdfiumCore pdfiumCore, PdfDocument pdfDocument, FitPolicy pageFitPolicy, Size viewSize, int[] originalUserPages,
             boolean isVertical, int spacing, boolean autoSpacing, boolean fitEachPage) {
         this.pdfiumCore = pdfiumCore;
@@ -85,6 +91,7 @@ class PdfFile {
         this.spacingPx = spacing;
         this.autoSpacing = autoSpacing;
         this.fitEachPage = fitEachPage;
+        this.openPageQueue = new LinkedList<Integer>();
         setup(viewSize);
     }
 
@@ -275,6 +282,17 @@ class PdfFile {
                 try {
                     pdfiumCore.openPage(pdfDocument, docPage);
                     openedPages.put(docPage, true);
+
+                    //handle the close of page
+                    openPageQueue.add(docPage);
+                    if(!openPageQueue.isEmpty()){
+                        if(openPageQueue.size() > MAX_PAGES){
+                            int oldPage = openPageQueue.poll();
+                            pdfiumCore.closePage(this.pdfDocument, oldPage);
+                            openedPages.delete(oldPage);
+                        }
+                    }
+
                     return true;
                 } catch (Exception e) {
                     openedPages.put(docPage, false);
